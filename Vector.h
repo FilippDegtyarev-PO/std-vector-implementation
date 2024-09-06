@@ -11,6 +11,7 @@ public:
     Vector<T>(std::initializer_list<T> initialization);
     Vector<T>(const Vector<T>& other);
     Vector<T>(Vector<T>&& other);
+    
     // Дополнительный конструктор от вектора
     Vector<T>(const std::vector<T>& other);
     Vector<T>(std::vector<T>&& other);
