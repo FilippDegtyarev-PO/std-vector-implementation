@@ -38,7 +38,7 @@ public:
     bool empty() const;
     size_t size() const;
     size_t max_size() const;
-    void reserve(size_t sz) const;  //NR
+    void reserve(size_t sz);
     size_t capacity() const;
     void shrink_to_fit();
 

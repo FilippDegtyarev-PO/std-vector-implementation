@@ -210,6 +210,21 @@ size_t Vector<T>::max_size() const {
 }
 
 template <typename T>
+void Vector<T>::reserve(size_t sz) {
+    if (capacity_ >= sz) {
+        return;
+    }
+    T* new_container = reinterpret_cast<T*>(operator new[](sz * single_object_size));
+    for (size_t i = 0; i < size_; ++i) {
+        new_container = std::move(container[i]);
+    }
+    clean(size_);
+    delete[] container;
+    container = new_container;
+    capacity_ = sz;
+}
+
+template <typename T>
 size_t Vector<T>::capacity() const {
     return capacity_;
 }
