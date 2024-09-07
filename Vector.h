@@ -6,7 +6,6 @@
 #include <typeinfo>
 #include <cstdint>
 
-
 template <typename T>
 class Vector {
 public:

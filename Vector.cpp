@@ -84,7 +84,7 @@ Vector<T>::~Vector<T>() {
     for (size_t i = 0; i < size_; ++i) {
         container[i].~T();
     }
-    delete[] container;
+    operator delete(container);
 }
 
 template <typename T>
@@ -115,7 +115,7 @@ void Vector<T>::rellocate() {
         container[i].~T();
         //new (new_container + i) T (container[i]);
     }
-    delete[] container;
+    operator delete(container);
     container = new_container;
     capacity_ = std::max<size_t>(2 * capacity_, 1);
 }
@@ -124,7 +124,7 @@ template <typename T>
 Vector<T>& Vector<T>::operator=(const Vector<T>& other) {
     T* new_container = reinterpret_cast<T*>(operator new[](other.capacity_ * single_object_size));
     clean(size_);
-    delete[] container;
+    operator delete(container);
     container = new_container;
     for (size_t i = 0; i < other.size_; ++i) {
         container[i] = other[i];
@@ -197,7 +197,7 @@ template <typename T>
 Vector<T>::Iterator::Iterator(T* pointer): pointer_(pointer) {};
 
 template <typename T>
-Vector<T>::Iterator& Vector<T>::Iterator::operator=(const Vector<T>::Iterator& rhs) {
+typename Vector<T>::Iterator& Vector<T>::Iterator::operator=(const Vector<T>::Iterator& rhs) {
     pointer_ = std::copy(rhs.pointer_);
     return *this;
 }
@@ -208,13 +208,13 @@ T& Vector<T>::Iterator::operator*() {
 }
 
 template <typename T>
-Vector<T>::Iterator& Vector<T>::Iterator::operator++() {
+typename Vector<T>::Iterator& Vector<T>::Iterator::operator++() {
     pointer_++;
     return *this;
 }
 
 template <typename T>
-Vector<T>::Iterator Vector<T>::Iterator::operator++(int) {
+typename Vector<T>::Iterator Vector<T>::Iterator::operator++(int) {
     Iterator result = *this;
     ++this;
     return result;
@@ -224,12 +224,12 @@ template <typename T>
 bool Vector<T>::Iterator::operator==(const Vector<T>::Iterator& other) { return (pointer_ == other.pointer_); }
 
 template <typename T>
-Vector<T>::Iterator Vector<T>::begin() const {
+typename Vector<T>::Iterator Vector<T>::begin() const {
     return Iterator(&(container[0]));
 }
 
 template <typename T>
-Vector<T>::Iterator Vector<T>::end() const {
+typename Vector<T>::Iterator Vector<T>::end() const {
     return Iterator((&container[size_ - 1]) + 1);
 }
 
@@ -248,10 +248,6 @@ size_t Vector<T>::size() const {
     return size_;
 }
 
-template <typename T>
-size_t Vector<T>::max_size() const {
-    return 0;
-}
 
 template <typename T>
 void Vector<T>::reserve(size_t sz) {
@@ -263,7 +259,7 @@ void Vector<T>::reserve(size_t sz) {
         new_container[i] = std::move(container[i]);
     }
     clean(size_);
-    delete[] container;
+    operator delete(container);
     container = new_container;
     capacity_ = sz;
 }
@@ -275,7 +271,16 @@ size_t Vector<T>::capacity() const {
 
 template <typename T>
 void Vector<T>::shrink_to_fit() {
-    container = reinterpret_cast<T*>(std::realloc(container, size_));
+    T* new_container = reinterpret_cast<T*>(operator new[](single_object_size * size_));
+
+    for (size_t i = 0; i < size_; ++i) {
+        new_container[i] = std::move(container[i]);
+    }
+
+    clean(size_);
+    operator delete(container);
+
+    container = new_container;
     capacity_ = size_;
 }
 
@@ -283,18 +288,15 @@ void Vector<T>::shrink_to_fit() {
 template <typename T>
 void Vector<T>::clear() {
     clean(size_);
-    delete[] container;
+    operator delete(container);
     container = nullptr;
     size_ = 0;
-    capacity_ = 0;
-    //*this = Vector<T>();    
+    capacity_ = 0;    
 }
 template <typename T>
 template <class... Args> 
 void Vector<T>::emplace_back( Args&&... args ) {
     push_back(T(std::forward<Args>(args) ...));
-    //push_back(std::move(T(std::forward<Args>(args))));
-    //(T<Args>::run(std::forward<Args>(args)), 0)
 }
 
 template <typename T>
@@ -316,14 +318,14 @@ void Vector<T>::resize(size_t new_size) {
 
     for (size_t i = 0; i < new_size; ++i) {
         if (i < size_) {
-            new_container[i] = container[i];
+            new_container[i] = std::move(container[i]);
         } else {
-            new_container[i] = T(); // Должно быть
+            new_container[i] = std::move(T()); // Должно быть
         }
     }
     size_ = new_size;
     capacity_ = size_ * 2;
-    delete[] container;
+    operator delete(container);
     container = new_container;
 }
 
@@ -337,14 +339,14 @@ void Vector<T>::resize(size_t new_size, const T& value) {
 
     for (size_t i = 0; i < new_size; ++i) {
         if (i < size_) {
-            new_container[i] = container[i];
+            new_container[i] = std::move(container[i]);
         } else {
             new_container[i] = value; // Должно быть
         }
     }
     size_ = new_size;
     capacity_ = size_ * 2;
-    delete[] container;
+    operator delete(container);
     container = new_container;
 }
 
