@@ -216,7 +216,7 @@ void Vector<T>::reserve(size_t sz) {
     }
     T* new_container = reinterpret_cast<T*>(operator new[](sz * single_object_size));
     for (size_t i = 0; i < size_; ++i) {
-        new_container = std::move(container[i]);
+        new_container[i] = std::move(container[i]);
     }
     clean(size_);
     delete[] container;
