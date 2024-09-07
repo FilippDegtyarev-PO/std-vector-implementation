@@ -2,6 +2,10 @@
 #include <cassert>
 #include <initializer_list>
 #include <iterator>
+#include <vector>
+#include <typeinfo>
+#include <cstdint>
+
 
 template <typename T>
 class Vector {
@@ -34,6 +38,27 @@ public:
     T& back() const;
     T* data() const;
 
+    // Iterators
+    struct Iterator {
+        Iterator(T* pointer);
+        Iterator& operator=(const Iterator& rhs);
+        
+        T& operator*();
+        Iterator operator++(int);
+        Iterator& operator++();
+
+        bool operator==(const Iterator& other);
+        bool operator!=(const Iterator& rhs);
+
+    private:
+        T* pointer_;
+    };
+    
+    Iterator begin() const;
+    Iterator end() const;
+    Iterator rbegin() const;
+    Iterator rend() const;
+
     // Capacity
     bool empty() const;
     size_t size() const;
@@ -50,7 +75,7 @@ public:
     template<class... Args>
     void emplace_back( Args&&... args );
 
-    void pop_back();  // update
+    void pop_back();
     void resize(size_t new_size);
     void resize(size_t new_size, const T& value);
 

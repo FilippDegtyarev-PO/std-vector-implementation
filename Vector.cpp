@@ -1,6 +1,4 @@
 #include "Vector.h"
-#include <vector>
-#include <typeinfo>
 
 template <typename T>
 void Vector<T>::clean(size_t index) {
@@ -193,7 +191,53 @@ T* Vector<T>::data() const {
     return container;
 }
 
+// Iterators
+
+template <typename T>
+Vector<T>::Iterator::Iterator(T* pointer): pointer_(pointer) {};
+
+template <typename T>
+Vector<T>::Iterator& Vector<T>::Iterator::operator=(const Vector<T>::Iterator& rhs) {
+    pointer_ = std::copy(rhs.pointer_);
+    return *this;
+}
+
+template <typename T>
+T& Vector<T>::Iterator::operator*() {
+    return *pointer_;
+}
+
+template <typename T>
+Vector<T>::Iterator& Vector<T>::Iterator::operator++() {
+    pointer_++;
+    return *this;
+}
+
+template <typename T>
+Vector<T>::Iterator Vector<T>::Iterator::operator++(int) {
+    Iterator result = *this;
+    ++this;
+    return result;
+}
+
+template <typename T>
+bool Vector<T>::Iterator::operator==(const Vector<T>::Iterator& other) { return (pointer_ == other.pointer_); }
+
+template <typename T>
+Vector<T>::Iterator Vector<T>::begin() const {
+    return Iterator(&(container[0]));
+}
+
+template <typename T>
+Vector<T>::Iterator Vector<T>::end() const {
+    return Iterator((&container[size_ - 1]) + 1);
+}
+
 // Capacity
+
+template <typename T>
+bool Vector<T>::Iterator::operator!=(const Vector<T>::Iterator& other) { return !(*this == other); }
+
 template <typename T>
 bool Vector<T>::empty() const {
     return (size_ == 0);
