@@ -11,7 +11,7 @@ public:
     Vector<T>(std::initializer_list<T> initialization);
     Vector<T>(const Vector<T>& other);
     Vector<T>(Vector<T>&& other);
-    
+
     // Дополнительный конструктор от вектора
     Vector<T>(const std::vector<T>& other);
     Vector<T>(std::vector<T>&& other);
@@ -40,7 +40,7 @@ public:
     size_t max_size() const;
     void reserve(size_t sz) const;  //NR
     size_t capacity() const;
-    void shrink_to_fit();  //NR
+    void shrink_to_fit();
 
     // Modifiers
     void clear();

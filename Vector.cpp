@@ -214,6 +214,12 @@ size_t Vector<T>::capacity() const {
     return capacity_;
 }
 
+template <typename T>
+void Vector<T>::shrink_to_fit() {
+    container = reinterpret_cast<T*>(std::realloc(container, size_));
+    capacity_ = size_;
+}
+
 // Modifiers
 template <typename T>
 void Vector<T>::clear() {
