@@ -40,23 +40,37 @@ public:
     // Iterators
     struct Iterator {
         Iterator(T* pointer);
-        Iterator& operator=(const Iterator& rhs);
+        Iterator& operator=(const Iterator& other);
         
         T& operator*();
         Iterator operator++(int);
         Iterator& operator++();
 
         bool operator==(const Iterator& other);
-        bool operator!=(const Iterator& rhs);
+        bool operator!=(const Iterator& other);
 
     private:
         T* pointer_;
     };
     
+    struct ReverseIterator {
+        ReverseIterator(T* pointer);
+        ReverseIterator& operator=(const ReverseIterator& other);
+
+        T& operator*();
+        ReverseIterator operator++(int);
+        ReverseIterator& operator++();
+
+        bool operator==(const ReverseIterator& other);
+        bool operator!=(const ReverseIterator& other);
+    private:
+        T* pointer_;
+    };
+
     Iterator begin() const;
     Iterator end() const;
-    Iterator rbegin() const;
-    Iterator rend() const;
+    ReverseIterator rbegin() const;
+    ReverseIterator rend() const;
 
     // Capacity
     bool empty() const;

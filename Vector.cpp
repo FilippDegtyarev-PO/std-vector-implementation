@@ -191,14 +191,13 @@ T* Vector<T>::data() const {
     return container;
 }
 
-// Iterators
-
+// Iterator
 template <typename T>
 Vector<T>::Iterator::Iterator(T* pointer): pointer_(pointer) {};
 
 template <typename T>
-typename Vector<T>::Iterator& Vector<T>::Iterator::operator=(const Vector<T>::Iterator& rhs) {
-    pointer_ = std::copy(rhs.pointer_);
+typename Vector<T>::Iterator& Vector<T>::Iterator::operator=(const Vector<T>::Iterator& other) {
+    pointer_ = other.pointer_;
     return *this;
 }
 
@@ -225,18 +224,75 @@ bool Vector<T>::Iterator::operator==(const Vector<T>::Iterator& other) { return 
 
 template <typename T>
 typename Vector<T>::Iterator Vector<T>::begin() const {
+    if (size_ == 0) {
+        throw std::out_of_range("Container is empty");
+    }
     return Iterator(&(container[0]));
 }
 
 template <typename T>
 typename Vector<T>::Iterator Vector<T>::end() const {
+    if (size_ == 0) {
+        throw std::out_of_range("Container is empty");
+    }
     return Iterator((&container[size_ - 1]) + 1);
 }
 
-// Capacity
-
 template <typename T>
 bool Vector<T>::Iterator::operator!=(const Vector<T>::Iterator& other) { return !(*this == other); }
+
+// Reverse iterator
+
+template <typename T>
+Vector<T>::ReverseIterator::ReverseIterator(T* pointer): pointer_(pointer) {};
+
+template <typename T>
+typename Vector<T>::ReverseIterator& Vector<T>::ReverseIterator::operator=(const Vector<T>::ReverseIterator& other) {
+    pointer_ = other.pointer_;
+    return *this;
+}
+
+template <typename T>
+T& Vector<T>::ReverseIterator::operator*() {
+    return *pointer_;
+}
+
+template <typename T>
+typename Vector<T>::ReverseIterator& Vector<T>::ReverseIterator::operator++() {
+    pointer_--;
+    return *this;
+}
+
+template <typename T>
+typename Vector<T>::ReverseIterator Vector<T>::ReverseIterator::operator++(int) {
+    ReverseIterator result = *this;
+    --this;
+    return result;
+}
+
+template <typename T>
+bool Vector<T>::ReverseIterator::operator==(const Vector<T>::ReverseIterator& other) { return (pointer_ == other.pointer_); }
+
+template <typename T>
+typename Vector<T>::ReverseIterator Vector<T>::rbegin() const {
+    if (size_ == 0) {
+        throw std::out_of_range("Container is empty");
+    }
+    return ReverseIterator((&container[size_ - 1]));
+}
+
+template <typename T>
+typename Vector<T>::ReverseIterator Vector<T>::rend() const {
+    if (size_ == 0) {
+        throw std::out_of_range("Container is empty");
+    }
+    return ReverseIterator((&container[0]) - 1);
+}
+
+template <typename T>
+bool Vector<T>::ReverseIterator::operator!=(const ReverseIterator& other) { return !(*this == other); }
+
+// Capacity
 
 template <typename T>
 bool Vector<T>::empty() const {
