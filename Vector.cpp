@@ -16,7 +16,6 @@ Vector<T>::Vector() {
 
 template <typename T>
 Vector<T>::Vector(size_t range) {
-    // Необходимо проверить коррекность
     size_ = range;
     capacity_ = 2 * size_;
     container = reinterpret_cast<T*>(operator new[](std::max<size_t>(capacity_, 1) * single_object_size));
@@ -26,7 +25,6 @@ Vector<T>::Vector(size_t range) {
         } catch (...) {
             std::cout << "Default constructor failed\n";
             clean(i);
-            std::exit(0);
         }
     }
 }
@@ -146,7 +144,7 @@ Vector<T>& Vector<T>::operator=(Vector<T>&& other) {
 template <typename T>
 void Vector<T>::assign(size_t count, const T& value) {
     clear();
-    this = Vector<T>(count);
+    *this = Vector<T>(count);
     for (size_t i = 0; i < size_; ++i) {
         container[i] = value;
     }
@@ -155,8 +153,11 @@ void Vector<T>::assign(size_t count, const T& value) {
 template <typename T>
 void Vector<T>::assign(std::initializer_list<T> inizialization) {
     clear();
-    this = std::move(T(inizialization));
+    for (auto it : inizialization) {
+        push_back(std::move(it));
+    }
 }
+
 // Acces to the elements of container type <T>
 template <typename T>
 T& Vector<T>::at(size_t index) const {
@@ -208,6 +209,11 @@ T& Vector<T>::Iterator::operator*() {
 }
 
 template <typename T>
+typename Vector<T>::Iterator Vector<T>::Iterator::operator+(size_t index) {
+    return Iterator(pointer_ + index);
+}
+
+template <typename T>
 typename Vector<T>::Iterator& Vector<T>::Iterator::operator++() {
     pointer_++;
     return *this;
@@ -256,6 +262,11 @@ typename Vector<T>::ReverseIterator& Vector<T>::ReverseIterator::operator=(const
 template <typename T>
 T& Vector<T>::ReverseIterator::operator*() {
     return *pointer_;
+}
+
+template <typename T>
+typename Vector<T>::ReverseIterator Vector<T>::ReverseIterator::operator+(size_t index) {
+    return ReverseIterator(pointer_ + index);
 }
 
 template <typename T>
@@ -403,11 +414,48 @@ void Vector<T>::insert(Vector<T>::Iterator pos, std::initializer_list<T> initial
         insert(Vector<T>::Iterator(&container[size_ - index]), initializer);
     }
 }
+template<typename T> 
+template <class... Args>
+void Vector<T>::emplace(Iterator pos, Args&&... args) {
+    insert(pos, T(std::forward<Args>(args) ...));
+}
 
 template <typename T>
 template <class... Args> 
 void Vector<T>::emplace_back( Args&&... args ) {
     push_back(T(std::forward<Args>(args) ...));
+}
+
+template <typename T>
+void Vector<T>::erase(Vector<T>::Iterator pos) {
+    if (size_ == 0) {
+        throw std::out_of_range("Container is empty");
+    }
+
+    (*pos).~T();
+    auto last = Iterator(&container[size_ - 1]);
+    for (; pos != last; ++pos) {
+        *pos = std::move(*(pos + 1));
+    }
+    pop_back();
+}
+
+template <typename T>
+void Vector<T>::erase(Vector<T>::Iterator start, Vector<T>::Iterator finish) {
+    // [first, last)
+    Vector<T>::Iterator it_s = start;
+    Vector<T>::Iterator it_f = finish;
+
+    size_t deleted = 0;
+    for (auto it = start; it != finish; ++it) {
+        (*it).~T();
+        ++deleted;
+    }
+
+    for (; it_f != end(); ++it_f, ++it_s) {
+        *it_s = std::move(*it_f);
+    }
+    resize(size_ - deleted);
 }
 
 template <typename T>
@@ -462,29 +510,8 @@ void Vector<T>::resize(size_t new_size, const T& value) {
 }
 
 template <typename T>
-bool Vector<T>::operator==(const Vector<T>& rhs) {
-    if (rhs.size_ != size_) {
-        return false;
-    }
-
-    for (size_t i = 0; i < size_; ++i) {
-        if (rhs[i] != at(i)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-template <typename T>
-bool Vector<T>::operator==( Vector<T>&& rhs) {
-    if (rhs.size_ != size_) {
-        return false;
-    }
-
-    for (size_t i = 0; i < size_; ++i) {
-        if (rhs[i] != this[i]) {
-            return false;
-        }
-    }
-    return true;
+void Vector<T>::swap(Vector<T>& other) {
+    capacity_ = other.capacity_;
+    size_ = other.size_;
+    container = other.container;
 }

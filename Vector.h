@@ -43,6 +43,7 @@ public:
         Iterator& operator=(const Iterator& other);
         
         T& operator*();
+        Iterator operator+(size_t);
         Iterator operator++(int);
         Iterator& operator++();
 
@@ -58,6 +59,7 @@ public:
         ReverseIterator& operator=(const ReverseIterator& other);
 
         T& operator*();
+        ReverseIterator operator+(size_t);
         ReverseIterator operator++(int);
         ReverseIterator& operator++();
 
@@ -85,11 +87,15 @@ public:
     void insert(Iterator pos, const T& value);
     void insert(Iterator pos, T&& value);
     void insert(Iterator pos, std::initializer_list<T> initializer);
-    void erase(); // NR
 
-    template<class... Args>
-    void emplace_back( Args&&... args );
+    template< class... Args >
+    void emplace( Iterator pos, Args&&... args);
 
+    template< class... Args>
+    void emplace_back(Args&&... args);
+
+    void erase(Iterator pos);
+    void erase(Iterator start, Iterator finish);
     void pop_back();
     void resize(size_t new_size);
     void resize(size_t new_size, const T& value);
@@ -100,9 +106,8 @@ public:
             std::cout << container[i] << " ";
         }
     }
-    bool operator==( const Vector<T>& rhs);
-    bool operator==( Vector<T>&& rhs);
-
+    
+    void swap(Vector<T>& other);
 private:
     size_t size_;
     size_t capacity_;
