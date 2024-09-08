@@ -6,6 +6,7 @@ void Vector<T>::clean(size_t index) {
         container[i].~T();
     }
 }
+
 template <typename T>
 Vector<T>::Vector() {
     size_ = 0;
@@ -341,6 +342,7 @@ void Vector<T>::shrink_to_fit() {
 }
 
 // Modifiers
+
 template <typename T>
 void Vector<T>::clear() {
     clean(size_);
@@ -349,6 +351,59 @@ void Vector<T>::clear() {
     size_ = 0;
     capacity_ = 0;    
 }
+
+template <typename T>
+void Vector<T>::insert(Vector<T>::Iterator pos, const T& value) {
+    T current = value;
+    for (auto it = pos; it != end(); ++it) {
+        T swap = *it;
+        *it = current;
+        current = std::move(swap);
+    }
+    container[size_++] = current;
+
+    if (size_ == capacity_) {
+        rellocate();
+    }
+}
+
+template <typename T>
+void Vector<T>::insert(Vector<T>::Iterator pos, T&& value) {
+    T current = std::move(value);
+    for (auto it = pos; it != end(); ++it) {
+        T swap = *it;
+        *it = current;
+        current = std::move(swap);
+    }
+    container[size_++] = current;
+
+    if (size_ == capacity_) {
+        rellocate();
+    }
+}
+
+template <typename T>
+void Vector<T>::insert(Vector<T>::Iterator pos, std::initializer_list<T> initializer) {
+    if (size_ + initializer.size() < capacity_) {
+
+        auto init_it = initializer.begin();
+        for (size_t i = 0; i < initializer.size(); ++i) {
+            insert(pos, *init_it);
+            ++pos;
+            ++init_it;
+        }
+    } else {
+        size_t index = 0;
+        while (pos != end()) {
+            ++index;
+            ++pos;
+        }
+        // size_ - index
+        reserve(2 * (size_ + initializer.size()));
+        insert(Vector<T>::Iterator(&container[size_ - index]), initializer);
+    }
+}
+
 template <typename T>
 template <class... Args> 
 void Vector<T>::emplace_back( Args&&... args ) {

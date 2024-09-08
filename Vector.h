@@ -82,7 +82,9 @@ public:
 
     // Modifiers
     void clear();
-    void insert(size_t pos, const T& element); // NR
+    void insert(Iterator pos, const T& value);
+    void insert(Iterator pos, T&& value);
+    void insert(Iterator pos, std::initializer_list<T> initializer);
     void erase(); // NR
 
     template<class... Args>
