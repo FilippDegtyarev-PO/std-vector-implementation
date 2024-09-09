@@ -117,4 +117,3 @@ private:
     void rellocate();
     void clean(size_t index);
 };
-
