@@ -5,6 +5,7 @@
 #include <vector>
 #include <typeinfo>
 #include <cstdint>
+#include <memory>
 
 template <typename T>
 class Vector {

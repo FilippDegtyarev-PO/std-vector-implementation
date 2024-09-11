@@ -21,7 +21,9 @@ Vector<T>::Vector(size_t range) {
     container = reinterpret_cast<T*>(operator new[](std::max<size_t>(capacity_, 1) * single_object_size));
     for (size_t i = 0; i < size_; ++i) {
         try {
-            container[i] = T();
+            if (std::is_default_constructible<T>::value) {
+                new (&container[i]) T{T()};
+            }
         } catch (...) {
             std::cout << "Default constructor failed\n";
             clean(i);
@@ -37,9 +39,20 @@ Vector<T>::Vector(std::initializer_list<T> initialization) {
     auto it = initialization.begin();
     size_t i = 0;
     while (it != initialization.end()) {
-        container[i] = *it;
-        ++it;
-        ++i;
+        try {
+            if (std::is_copy_assignable<T>::value) {
+                container[i] = *it;
+            } else if (std::is_copy_constructible<T>::value) {  // 45 СТРОЧКА
+                new (&container[i]) T{*it};
+            }
+            ++it;
+            ++i;
+        } catch (...) {
+            clean(i);
+        }
+        // container[i] = *it;
+        // ++it;
+        // ++i;
     }
 }
 
@@ -63,7 +76,16 @@ Vector<T>::Vector(const std::vector<T>& other) {
     capacity_ = other.capacity();
     *this = std::move(Vector<T>(size_));
     for (size_t i = 0; i < size_; ++i) {
-        container[i] = other[i];
+        try {
+            if (std::is_copy_constructible<T>::value) {
+                new (&container[i]) T{other[i]};
+            } else if (std::is_copy_assignable<T>::value) {
+                container[i] = other[i];
+            }
+        } catch (...) {
+            clean(i);
+            break;
+        }
     }
 }
 
@@ -74,7 +96,11 @@ Vector<T>::Vector(std::vector<T>&& other) {
     Vector<T>&& ptr = Vector<T>(size_);
     *this = std::move(ptr);
     for (size_t i = 0; i < size_; ++i) {
-        container[i] = std::move(other[i]);
+        if (std::is_move_constructible<T>::value) {
+            new (&container[i]) T{std::move(other[i])};
+        } else if (std::is_move_assignable<T>::value) {
+            container[i] = std::move(other[i]);
+        }
     }
 }
 
@@ -91,7 +117,13 @@ void Vector<T>::push_back(const T& element) {
     if (size_ == capacity_) {
         rellocate();
     }
-    container[size_++] = element;
+    try {
+        if (std::is_copy_constructible<T>::value) {
+            new (&container[size_++]) T{element};
+        } else if (std::is_copy_assignable<T>::value) {
+            container[size_++] = element;
+        }
+    } catch (...) {};
 }
 
 template <typename T>
@@ -99,7 +131,13 @@ void Vector<T>::push_back(T&& element) {
     if (size_ == capacity_) {
         rellocate();
     }
-    container[size_++] = std::move(element);
+    try {
+        if (std::is_move_constructible<T>::value) {
+            new (&container[size_++]) T{std::move(element)};
+        } else if (std::is_move_assignable<T>::value) {
+            container[size_++] = std::move(element);
+        }
+    } catch (...) {};
 }
 
 template <typename T>
@@ -141,6 +179,8 @@ Vector<T>& Vector<T>::operator=(const Vector<T>& other) {
         try {
             if (std::is_copy_assignable<T>::value) {
                 container[i] = other[i];
+            } else if (std::is_copy_constructible<T>::value) {
+                new (&container[i]) T{other[i]};
             }
         } catch (...){};
         //container[i] = other[i];
@@ -166,6 +206,8 @@ void Vector<T>::assign(size_t count, const T& value) {
         try {
             if (std::is_copy_assignable<T>::value) { 
                 container[i] = value;
+            } else if (std::is_copy_constructible<T>::value) {
+                new (&container[i]) T{value};
             }
         } catch (...) {
             clean(i);
@@ -173,12 +215,11 @@ void Vector<T>::assign(size_t count, const T& value) {
     }
 }
 
-// ПРОВЕРИТЬ КОРРЕКНОСТЬ
 template <typename T>
 void Vector<T>::assign(std::initializer_list<T> inizialization) {
     clear();
     for (auto it : inizialization) {
-        push_back(std::move(it));
+        push_back(it);
     }
 }
 
@@ -349,20 +390,19 @@ void Vector<T>::reserve(size_t sz) {
     T* new_container = reinterpret_cast<T*>(operator new[](sz * single_object_size));
     for (size_t i = 0; i < size_; ++i) {
         try {
-            if (std::is_move_assignable<T>::value) {
-                new_container[i] = std::move(container[i]);
-            } else if (std::is_copy_assignable<T>::value) {
-                new_container[i] = std::move(container[i]);
+            if (std::is_move_constructible<T>::value) {
+                new (&new_container[i])  T{std::move(container[i])};
+            } else if (std::is_copy_constructible<T>::value) {
+                new (&new_container[i]) T{container[i]};
             }
         } catch (...) {
-            for (size_t j = 0; j < i; ++j) {
-                new_container[j].~T();
-            }
-            return;
+            clean(i);
+            break;
         };
     }
     clean(size_);
     operator delete(container);
+
     container = new_container;
     capacity_ = sz;
 }
@@ -378,20 +418,16 @@ void Vector<T>::shrink_to_fit() {
 
     for (size_t i = 0; i < size_; ++i) {
         try {
-            if (std::is_move_assignable<T>::value) {
-                new_container[i] = std::move(container[i]);
-            } else if (std::is_copy_assignable<T>::value) {
-                new_container[i] = container[i];
+            if (std::is_move_constructible<T>::value) {
+                new (&new_container[i]) T{std::move(container[i])};
+            } else if (std::is_copy_constructible<T>::value) {
+                new (&new_container[i]) T{container[i]};
             }
         } catch (...) {
-            for (size_t j = 0; j < i; ++j) {
-                new_container[i].~T();
-            }
+            clean(i);
             break;
         };
-        
     }
-
     clear();
     operator delete(container);
 
