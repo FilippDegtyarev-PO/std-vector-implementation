@@ -106,8 +106,8 @@ public:
         for (size_t i = 0; i < size_; ++i) {
             std::cout << container[i] << " ";
         }
+        std::cout << "\n";
     }
-    
     void swap(Vector<T>& other);
 private:
     size_t size_;
@@ -116,5 +116,6 @@ private:
     static constexpr size_t single_object_size = sizeof(T);
 
     void rellocate();
+    void reduce();
     void clean(size_t index);
 };
